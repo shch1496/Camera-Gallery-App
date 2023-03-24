@@ -11,6 +11,9 @@ let chunks = []; //media data in chunks
 let contraints = {
   video: true,
   audio: true,
+
+  // video: false,
+  // audio: false,
 };
 
 // navigator -> global object -provide by window -> gives browser info
@@ -30,11 +33,24 @@ navigator.mediaDevices.getUserMedia(contraints).then((stream) => {
   recorder.addEventListener("stop", (e) => {
     //conversion of media chucks data to video
     let blob = new Blob(chunks, { type: "video/mp4" });
-    let videoURL = window.URL.createObjectURL(blob);
-    let a = document.createElement("a");
-    a.href = videoURL;
-    a.download = "stream.mp4";
-    a.click();
+
+    if (db) {
+      let videoID = shortid();
+      let dbTransaction = db.transaction("video", "readwrite");
+      let videoStore = dbTransaction.objectStore("video");
+      let videoEntry = {
+        id: `vid-${videoID}`,
+        blobData: blob,
+      };
+
+      videoStore.add(videoEntry);
+    }
+
+    // let videoURL = window.URL.createObjectURL(blob);
+    // let a = document.createElement("a");
+    // a.href = videoURL;
+    // a.download = "stream.mp4";
+    // a.click();
   });
 });
 
@@ -59,6 +75,7 @@ recordBtnCont.addEventListener("click", (e) => {
 });
 
 captureBtnCont.addEventListener("click", (e) => {
+  captureBtn.classList.add("scale-capture");
   let canvas = document.createElement("canvas");
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
@@ -71,10 +88,26 @@ captureBtnCont.addEventListener("click", (e) => {
   tool.fillStyle = transparentColor;
   tool.fillRect(0, 0, canvas.width, canvas.height);
   let imageURL = canvas.toDataURL();
-  let a = document.createElement("a");
-  a.href = imageURL;
-  a.download = "image.jpg";
-  a.click();
+
+  if (db) {
+    let imageID = shortid();
+    let dbTransaction = db.transaction("image", "readwrite");
+    let imageStore = dbTransaction.objectStore("image");
+    let imageEntry = {
+      id: `img-${imageID}`,
+      url: imageURL,
+    };
+
+    imageStore.add(imageEntry);
+  }
+
+  // let a = document.createElement("a");
+  // a.href = imageURL;
+  // a.download = "image.jpg";
+  // a.click();
+  setTimeout(() => {
+    captureBtn.classList.remove("scale-capture");
+  }, 500);
 });
 
 let timerID;
